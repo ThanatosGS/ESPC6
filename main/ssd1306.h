@@ -9,12 +9,11 @@
 #define SSD1306_PAGES  (SSD1306_HEIGHT / 8)
 
 typedef struct {
-    i2c_master_bus_handle_t bus;
     i2c_master_dev_handle_t dev;
     uint8_t fb[SSD1306_WIDTH * SSD1306_PAGES]; /* 1024 bytes framebuffer */
 } ssd1306_t;
 
-esp_err_t ssd1306_init(ssd1306_t *oled, int sda, int scl, uint8_t addr);
+esp_err_t ssd1306_init(ssd1306_t *oled, i2c_master_bus_handle_t bus, uint8_t addr);
 void      ssd1306_clear(ssd1306_t *oled);
 void      ssd1306_flush(ssd1306_t *oled);
 void      ssd1306_set_pixel(ssd1306_t *oled, int x, int y, int on);

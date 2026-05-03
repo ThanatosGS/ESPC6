@@ -1,7 +1,6 @@
 #include <string.h>
 #include "ssd1306.h"
 #include "esp_log.h"
-#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -117,29 +116,14 @@ static void send_cmd(ssd1306_t *oled, uint8_t cmd)
 
 /* ---- Public API -------------------------------------------------------- */
 
-esp_err_t ssd1306_init(ssd1306_t *oled, int sda, int scl, uint8_t addr)
+esp_err_t ssd1306_init(ssd1306_t *oled, i2c_master_bus_handle_t bus, uint8_t addr)
 {
-    /* remet les pins en entrée GPIO flottante : corrige tout état bloqué
-     * laissé par un scan ou un init précédent qui aurait mal fini */
-    gpio_reset_pin(sda);
-    gpio_reset_pin(scl);
-
-    i2c_master_bus_config_t bus_cfg = {
-        .i2c_port            = I2C_NUM_0,
-        .sda_io_num          = sda,
-        .scl_io_num          = scl,
-        .clk_source          = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt   = 7,
-        .flags.enable_internal_pullup = true,
-    };
-    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_cfg, &oled->bus));
-
     i2c_device_config_t dev_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address  = addr,
-        .scl_speed_hz    = 100000, /* 100 kHz, plus robuste avec pull-ups internes */
+        .scl_speed_hz    = 100000,
     };
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(oled->bus, &dev_cfg, &oled->dev));
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &dev_cfg, &oled->dev));
 
     vTaskDelay(pdMS_TO_TICKS(100)); /* délai power-up requis par le SSD1306 */
 
@@ -173,7 +157,7 @@ esp_err_t ssd1306_init(ssd1306_t *oled, int sda, int scl, uint8_t addr)
     ssd1306_clear(oled);
     ssd1306_flush(oled);
 
-    ESP_LOGI(TAG, "SSD1306 initialisé (SDA=%d SCL=%d addr=0x%02X)", sda, scl, addr);
+    ESP_LOGI(TAG, "SSD1306 initialisé (addr=0x%02X)", addr);
     return ESP_OK;
 }
 
