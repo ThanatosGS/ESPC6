@@ -1,0 +1,2 @@
+# Cible ESP32-C6
+CONFIG_IDF_TARGET="esp32c6"
